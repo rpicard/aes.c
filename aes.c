@@ -7,6 +7,6 @@ void ShiftRows();
 void MixColumns();
 
 // state is an array of uint32
-// each uint32 is a column of 3 bytes
+// each uint32 is a column of 4 bytes
 uint32[] state;
 
