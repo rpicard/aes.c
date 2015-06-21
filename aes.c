@@ -63,12 +63,17 @@ void SubBytes(uint8_t[] state)
     }
 }
 
-void AddRoundKey(uint8_t[16] state, uint8_t[16] round_key)
+void AddRoundKey(uint8_t[16] state, uint32_t[4] round_key)
 {
     // XOR each column of the state with a word (4 bytes) from the round
     // key
-    for (uint8_t i = 0; i < Nb_bytes; i++) {
-        state[i] = state[i] ^ round_key[i];
+    for (uint8_t c = 0; i < Nb; i++) {
+        // TODO this does not seem like it will do what I am trying to do here
+        // I should start actually running this to test it...
+        state[0+c] ^= (round_key[i] && 0xFF000000);
+        state[4+c] ^= (round_key[i] && 0xFF0000);
+        state[8+c] ^= (round_key[i] && 0xFF00);
+        state[12+c] ^= (round_key[i] && 0xFF);
     }
 }
 
