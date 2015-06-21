@@ -51,7 +51,7 @@ void EncryptBlock(uint8_t[16] in, uint8_t[16] out, uint32_t[] key_schedule)
     AddRoundKey(state, key_schedule[Nr * Nb, (Nr + 1) * Nb - 1]);
 
     // all of that fiddling with the state leaves us with the encrypted
-    // block.
+    // block
     out = state;
 }
 
