@@ -70,32 +70,32 @@ void AddRoundKey(uint8_t* state, uint32_t* round_key)
     for (uint8_t c = 0; c < 4; c++) {
         // TODO this does not seem like it will do what I am trying to do here
         // I should start actually running this to test it...
-        state[0+c] ^= (round_key[i] && 0xFF000000);
-        state[4+c] ^= (round_key[i] && 0xFF0000);
-        state[8+c] ^= (round_key[i] && 0xFF00);
-        state[12+c] ^= (round_key[i] && 0xFF);
+        state[0+c] ^= (round_key[c] & 0xFF000000);
+        state[4+c] ^= (round_key[c] & 0xFF0000);
+        state[8+c] ^= (round_key[c] & 0xFF00);
+        state[12+c] ^= (round_key[c] & 0xFF);
     }
 }
 
 void ShiftRows(uint8_t* state)
 {
-    for (uint8_t c = 0; c < Nb; c++) {
-        state[4+c] = state[(4+(c+1)) % Nb];
+    for (uint8_t c = 0; c < 4; c++) {
+        state[4+c] = state[(4+(c+1)) % 4];
     }
 
-    for (uint8_t c = 0; c < Nb; c++) {
-        state[8+c] = state[(8+(c+2)) % Nb];
+    for (uint8_t c = 0; c < 4; c++) {
+        state[8+c] = state[(8+(c+2)) % 4];
     }
 
-    for (uint8_t c = 0; c < Nb; c++) {
-        state[12+c] = state[(12+(c+3)) % Nb];
+    for (uint8_t c = 0; c < 4; c++) {
+        state[12+c] = state[(12+(c+3)) % 4];
     }
 }
 
 void MixColumns(uint8_t* state)
 {
-    for (uint8_t c = 0; c < Nb; c++ ) {
-        for (uint8_t r = 0; r < Nb; r++) { 
+    for (uint8_t c = 0; c < 4; c++ ) {
+        for (uint8_t r = 0; r < 4; r++) { 
             state[(4*r) + c] = (0x02 * state[(4*r) + c]) ^ (0x03 * state[(4*(r+1)) + c]) ^ state[(4*(r+2)) + c] ^ state[(4*(r+3)) + c];
         }
     }
@@ -120,10 +120,12 @@ void KeyExpansion(uint8_t* key, uint32_t* key_schedule, uint8_t Nk)
         temp = key_schedule[i-1];
 
         if ((i % Nk) == 0) {
-            temp = SubWord(RotWord(temp)) ^ Rcon[i/Nk]
+            RotWord(temp);
+            SubWord(temp);
+            temp ^= Rcon[i/Nk];
         }
         else if ((Nk > 6) && ((i % Nk) == 4)) {
-            temp = SubWord(temp);
+            SubWord(temp);
         }
 
         key_schedule[i] = key_schedule[i-1] ^ temp;
@@ -134,24 +136,26 @@ void SubWord(uint32_t in)
 {
     uint8_t the_bytes[4];
 
-    the_bytes = bytes(in);
+    bytes(in, the_bytes);
     SubBytes(the_bytes);
 
-    in = word(the_bytes);
+    in = word(the_bytes[0], the_bytes[1], the_bytes[2], the_bytes[3]);
 }
 
 void RotWord(uint32_t in)
 {
     uint8_t out[4];
-    uint8_t temp[4];
+    uint8_t temp;
 
-    temp = bytes(in);
-    out[0] = temp[1];
-    out[1] = temp[2];
-    out[2] = temp[3];
-    out[3] = temp[0];
+    bytes(in, out);
 
-    in = out;
+    temp = out[0];
+    out[0] = out[1];
+    out[1] = out[2];
+    out[2] = out[3];
+    out[3] = temp;
+
+    in = word(out[0], out[1], out[2], out[3]);
 }
 
 uint32_t word(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
@@ -159,35 +163,30 @@ uint32_t word(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
     uint32_t the_word;
     
     the_word = (a << 24);
-    the_word = the_word && (b << 16);
-    the_word = the_word && (c << 8);
-    the_word = the_word && (d);
+    the_word = the_word & (b << 16);
+    the_word = the_word & (c << 8);
+    the_word = the_word & (d);
 
     return the_word;
 }
 
-uint8_t* bytes(uint32_t in)
+void bytes(uint32_t in, uint8_t* out)
 {
-    uint8_t the_bytes[4];
-
-    the_bytes[0] = (in >> 24) && 0xFF;
-    the_bytes[1] = (in >> 16) && 0xFF;
-    the_bytes[2] = (in >> 8) && 0xFF;
-    the_bytes[3] = in && 0xFF;
-
-    return the_bytes;
+    out[0] = (in >> 24) & 0xFF;
+    out[1] = (in >> 16) & 0xFF;
+    out[2] = (in >> 8) & 0xFF;
+    out[3] = in & 0xFF;
 }
 
 int main(void)
 {
-    uint8_t in_block[16] = {0};
+    uint8_t block[16] = {0};
     uint8_t key[16] = {0};
     uint8_t Nk = 4;
 
-    uint8_t out_block[16];
     uint32_t key_schedule[4];
 
     KeyExpansion(key, key_schedule, Nk);
-    EncryptBlock(in_block, out_block, key_schedule);
+    EncryptBlock(block, key_schedule);
 
 }
