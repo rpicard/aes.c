@@ -1,9 +1,14 @@
 // these are the functions we will use
-void AddRoundKey();
-void SubBytes();
-void ShiftRows();
-void MixColumns();
-int32_t[4] SetState(int8_t[16]);
+void EncryptBlock(uint8_t*, uint8_t*);
+void SubBytes(uint8_t*);
+void AddRoundKey(uint8_t*, uint32_t*);
+void ShiftRows(uint8_t*);
+void MixColumns(uint8_t*);
+void KeyExpansion(uint8_t*, uint32_t*, uint8_t);
+void SubWord(uint32_t);
+void RotWord(uint32_t);
+uint32_t word(uint8_t, uint8_t, uint8_t, uint8_t);
+uint8_t* bytes(uint32_t);
 
 // the s-box and its inverse used in the SubBytes operation
 uint8_t s[256] = 
